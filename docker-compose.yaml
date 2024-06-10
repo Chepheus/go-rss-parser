@@ -1,0 +1,31 @@
+version: "3.5"
+
+services:
+  postgres:
+    image: postgres:16.3
+    ports:
+      - "5431:5432"
+    networks:
+      - local
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=rss_parser
+    volumes:
+      - pgdata:/var/lib/postgresql/data 
+
+  rss-parser:
+    container_name: rss-parser
+    image: rss-parser-service
+    build:
+      context: ./rss-parser
+      dockerfile: ./docker/Dockerfile
+    networks:
+      - local
+
+networks:
+  local:
+    driver: bridge
+
+volumes:
+  pgdata:
