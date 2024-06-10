@@ -1,27 +1,25 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.19
+FROM golang:1.22-alpine3.20 as builder
 
-# Set destination for COPY
 WORKDIR /app
 
-# Download Go modules
 COPY go.mod go.sum ./
-RUN go mod download
+RUN go mod download && go mod verify
 
-# Copy the source code. Note the slash at the end, as explained in
-# https://docs.docker.com/reference/dockerfile/#copy
 COPY . ./
 
-# Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o /rss-parser
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/rss-parser
 
-# Optional:
-# To bind to a TCP port, runtime parameters must be supplied to the docker command.
-# But we can document in the Dockerfile what ports
-# the application is going to listen on by default.
-# https://docs.docker.com/reference/dockerfile/#expose
+FROM alpine:3.20 as prod
+
+WORKDIR /app
+
+COPY --from=builder /app/rss-parser .
+COPY --from=builder /app/migrations ./migrations
+
 EXPOSE 8080
 
-# Run
-CMD ["/rss-parser"]
+RUN ln -s /app/rss-parser /usr/local/bin/rss-parser
+
+CMD ["rss-parser"]

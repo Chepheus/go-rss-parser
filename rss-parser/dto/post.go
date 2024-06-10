@@ -1,7 +1,7 @@
 package dto
 
 type Post struct {
-	Id               int
+	Id               uint64
 	Title            string
 	ShortDescription string
 	ExternalPostLink string

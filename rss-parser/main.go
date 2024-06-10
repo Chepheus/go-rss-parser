@@ -40,7 +40,11 @@ func runTicker(shutdown chan bool, db *sql.DB) {
 	signal.Notify(sigKill, syscall.SIGINT, syscall.SIGTERM)
 	for {
 		select {
-		case <-ticker.C:
+		case _, ok := <-ticker.C:
+			if !ok {
+				sigKill <- syscall.SIGTERM
+				return
+			}
 			go func() {
 				posts := scrapper.ScrapRssPosts(rssUrl)
 				for _, p := range posts {
@@ -53,6 +57,7 @@ func runTicker(shutdown chan bool, db *sql.DB) {
 			}()
 		case <-sigKill:
 			ticker.Stop()
+			db.Close()
 			fmt.Println("SIGTERM")
 			shutdown <- true
 			return
