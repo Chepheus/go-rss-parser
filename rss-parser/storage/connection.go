@@ -13,7 +13,7 @@ func NewDbConnection(connStr string) *sql.DB {
 }
 
 func reconnectDbConnection(connStr string) *sql.DB {
-	fmt.Println("connection")
+	fmt.Println("[postgres]connection")
 	db, err := sql.Open("postgres", connStr)
 	if pingErr := db.Ping(); err != nil || pingErr != nil {
 		fmt.Println(err, pingErr)

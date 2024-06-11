@@ -14,11 +14,31 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data 
 
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+        - local
+
   rss-parser:
     container_name: rss-parser
     image: rss-parser-service
     build:
       context: ./rss-parser
+      dockerfile: ./docker/Dockerfile
+    networks:
+      - local
+
+  web-parser:
+    container_name: web-parser
+    image: web-parser-service
+    build:
+      context: ./web-parser
       dockerfile: ./docker/Dockerfile
     networks:
       - local

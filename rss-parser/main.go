@@ -13,6 +13,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/Chepheus/go-rss-parser/rss-parser/dto"
+	"github.com/Chepheus/go-rss-parser/rss-parser/messanger"
 	"github.com/Chepheus/go-rss-parser/rss-parser/scrapper"
 	"github.com/Chepheus/go-rss-parser/rss-parser/storage"
 	"github.com/Chepheus/go-rss-parser/rss-parser/storage/repository"
@@ -23,17 +24,22 @@ const rssUrl = "https://feeds.bbci.co.uk/news/world/rss.xml"
 const connectionStr = "postgresql://root:password@postgres:5432/rss_parser?sslmode=disable"
 const migrationSrc = "file://migrations"
 
+const amqpConnStr = "amqp://guest:guest@rabbitmq:5672/"
+const queuqName = "rss_post"
+
 func main() {
 	db := storage.NewDbConnection(connectionStr)
 	storage.MigrationsUp(db, migrationSrc)
 
+	amqpMessanger := messanger.NewAMQPMessanger(amqpConnStr, queuqName)
+
 	shutdown := make(chan bool, 1)
-	go runTicker(shutdown, db)
+	go runTicker(shutdown, db, amqpMessanger)
 	<-shutdown
 }
 
 // Run starts service
-func runTicker(shutdown chan bool, db *sql.DB) {
+func runTicker(shutdown chan bool, db *sql.DB, amqpMessanger messanger.AMQPMessanger) {
 	ticker := time.NewTicker(period * time.Second)
 	postRepository := repository.NewPostRepository(db)
 	sigKill := make(chan os.Signal, 1)
@@ -45,19 +51,20 @@ func runTicker(shutdown chan bool, db *sql.DB) {
 				sigKill <- syscall.SIGTERM
 				return
 			}
-			go func() {
-				posts := scrapper.ScrapRssPosts(rssUrl)
-				for _, p := range posts {
-					post := *dto.NewPost(p.Title, p.Description, p.Link, p.Thumbnail, p.PubDate)
-					err := postRepository.Save(post)
-					if err != nil {
-						log.Fatal(err)
-					}
+			posts := scrapper.ScrapRssPosts(rssUrl)
+			for _, p := range posts {
+				post := *dto.NewPost(p.Title, p.Description, p.Link, p.Thumbnail, p.PubDate)
+				err := postRepository.Save(post)
+				if err != nil {
+					log.Fatal(err)
 				}
-			}()
+
+				amqpMessanger.Publish(post.ExternalPostLink)
+			}
 		case <-sigKill:
 			ticker.Stop()
 			db.Close()
+			amqpMessanger.Close()
 			fmt.Println("SIGTERM")
 			shutdown <- true
 			return
