@@ -18,7 +18,7 @@ func (m AMQPMessanger) Consume() chan string {
 	msgs, err := m.amqpCh.Consume(
 		m.queue.Name, // queue
 		"",           // consumer
-		true,         // auto-ack
+		false,        // auto-ack
 		false,        // exclusive
 		false,        // no-local
 		false,        // no-wait
@@ -31,8 +31,8 @@ func (m AMQPMessanger) Consume() chan string {
 	messageCh := make(chan string)
 	go func() {
 		for m := range msgs {
-			log.Printf("Received a message: %s", m.Body)
 			messageCh <- string(m.Body)
+			m.Ack(false)
 		}
 	}()
 	return messageCh
@@ -52,7 +52,7 @@ func NewAMQPMessanger(connStr, queuqName string) AMQPMessanger {
 
 	q, err := ch.QueueDeclare(
 		queuqName, // name
-		false,     // durable
+		true,      // durable
 		false,     // delete when unused
 		false,     // exclusive
 		false,     // no-wait

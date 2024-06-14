@@ -44,7 +44,7 @@ func NewAMQPMessanger(connStr, queuqName string) AMQPMessanger {
 
 	q, err := amqpCh.QueueDeclare(
 		queuqName, // name
-		false,     // durable
+		true,      // durable
 		false,     // delete when unused
 		false,     // exclusive
 		false,     // no-wait

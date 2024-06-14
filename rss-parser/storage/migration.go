@@ -23,6 +23,11 @@ func MigrationsUp(db *sql.DB, migrationSrc string) {
 		log.Fatal(err)
 	}
 
-	m.Down()
-	m.Up()
+	// if err := m.Down(); err != nil {
+	// log.Fatal(err)
+	// }
+
+	if err := m.Up(); err != nil && err.Error() != "no change" {
+		log.Fatal(err)
+	}
 }

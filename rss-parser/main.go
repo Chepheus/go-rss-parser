@@ -19,7 +19,7 @@ import (
 	"github.com/Chepheus/go-rss-parser/rss-parser/storage/repository"
 )
 
-const period = 5
+const period = 10
 const rssUrl = "https://feeds.bbci.co.uk/news/world/rss.xml"
 const connectionStr = "postgresql://root:password@postgres:5432/rss_parser?sslmode=disable"
 const migrationSrc = "file://migrations"
@@ -32,16 +32,16 @@ func main() {
 	storage.MigrationsUp(db, migrationSrc)
 
 	amqpMessanger := messanger.NewAMQPMessanger(amqpConnStr, queuqName)
+	postRepository := repository.NewPostRepository(db)
 
 	shutdown := make(chan bool, 1)
-	go runTicker(shutdown, db, amqpMessanger)
+	go runTicker(shutdown, db, amqpMessanger, postRepository)
 	<-shutdown
 }
 
 // Run starts service
-func runTicker(shutdown chan bool, db *sql.DB, amqpMessanger messanger.AMQPMessanger) {
+func runTicker(shutdown chan bool, db *sql.DB, amqpMessanger messanger.AMQPMessanger, postRepository repository.PostRepository) {
 	ticker := time.NewTicker(period * time.Second)
-	postRepository := repository.NewPostRepository(db)
 	sigKill := make(chan os.Signal, 1)
 	signal.Notify(sigKill, syscall.SIGINT, syscall.SIGTERM)
 	for {
@@ -53,13 +53,26 @@ func runTicker(shutdown chan bool, db *sql.DB, amqpMessanger messanger.AMQPMessa
 			}
 			posts := scrapper.ScrapRssPosts(rssUrl)
 			for _, p := range posts {
-				post := *dto.NewPost(p.Title, p.Description, p.Link, p.Thumbnail, p.PubDate)
-				err := postRepository.Save(post)
-				if err != nil {
-					log.Fatal(err)
-				}
+				go func(p scrapper.PostData) {
+					isExist, err := postRepository.IsExist(p.Link)
+					if err != nil {
+						log.Fatal(err)
+					}
 
-				amqpMessanger.Publish(post.ExternalPostLink)
+					if !isExist {
+						post := *dto.NewPost(p.Title, p.Description, p.Link, p.Thumbnail, p.PubDate)
+						err := postRepository.Save(post)
+						if err != nil {
+							log.Fatal(err)
+						}
+
+						err = amqpMessanger.Publish(post.ExternalPostLink)
+						if err != nil {
+							log.Fatal(err)
+						}
+						fmt.Println("[rss-parser] Published to RebbitMQ: " + post.ExternalPostLink)
+					}
+				}(p)
 			}
 		case <-sigKill:
 			ticker.Stop()

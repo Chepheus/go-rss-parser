@@ -2,6 +2,7 @@ package scrapper
 
 import (
 	"log"
+	"strings"
 
 	"github.com/gocolly/colly/v2"
 )
@@ -28,15 +29,17 @@ func (rs *RssScrapper) VisitRss(rssUrl string) ([]PostData, error) {
 		thumbnails := e.ChildAttrs("/item/media:thumbnail", "url")
 		pubDates := e.ChildTexts("/item/pubDate")
 
-		for i, _ := range titles {
-			post := PostData{
-				Title:       titles[i],
-				Description: descriptions[i],
-				Link:        links[i],
-				Thumbnail:   thumbnails[i],
-				PubDate:     pubDates[i],
+		for i, link := range links {
+			if strings.Contains(link, "news/articles") {
+				post := PostData{
+					Title:       titles[i],
+					Description: descriptions[i],
+					Link:        links[i],
+					Thumbnail:   thumbnails[i],
+					PubDate:     pubDates[i],
+				}
+				posts = append(posts, post)
 			}
-			posts = append(posts, post)
 		}
 	})
 

@@ -1,0 +1,1 @@
+ALTER TABLE posts DROP CONSTRAINT external_post_link_enq;
