@@ -17,8 +17,6 @@ WORKDIR /app
 
 COPY --from=builder /app/web-parser .
 
-EXPOSE 8080
-
 RUN ln -s /app/web-parser /usr/local/bin/web-parser
 
 CMD ["web-parser"]

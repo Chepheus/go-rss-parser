@@ -43,6 +43,17 @@ services:
     networks:
       - local
 
+  web-server:
+    container_name: web-server
+    image: web-server-service
+    build:
+      context: ./web-server
+      dockerfile: ./docker/Dockerfile
+    ports:
+      - 8080:8080
+    networks:
+      - local
+
 networks:
   local:
     driver: bridge

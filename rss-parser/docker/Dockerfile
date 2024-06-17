@@ -16,9 +16,6 @@ FROM alpine:3.20 as prod
 WORKDIR /app
 
 COPY --from=builder /app/rss-parser .
-COPY --from=builder /app/migrations ./migrations
-
-EXPOSE 8080
 
 RUN ln -s /app/rss-parser /usr/local/bin/rss-parser
 

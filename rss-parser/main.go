@@ -22,14 +22,12 @@ import (
 const period = 10
 const rssUrl = "https://feeds.bbci.co.uk/news/world/rss.xml"
 const connectionStr = "postgresql://root:password@postgres:5432/rss_parser?sslmode=disable"
-const migrationSrc = "file://migrations"
 
 const amqpConnStr = "amqp://guest:guest@rabbitmq:5672/"
 const queuqName = "rss_post"
 
 func main() {
 	db := storage.NewDbConnection(connectionStr)
-	storage.MigrationsUp(db, migrationSrc)
 
 	amqpMessanger := messanger.NewAMQPMessanger(amqpConnStr, queuqName)
 	postRepository := repository.NewPostRepository(db)
