@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/Chepheus/go-rss-parser/web-server/pages"
 	"github.com/Chepheus/go-rss-parser/web-server/storage"
+	"github.com/Chepheus/go-rss-parser/web-server/web"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
@@ -16,5 +16,5 @@ func main() {
 	db := storage.NewDbConnection(connectionStr)
 	storage.MigrationsUp(db, migrationSrc)
 
-	pages.StartWebServer(port, db)
+	web.StartWebServer(port, db)
 }

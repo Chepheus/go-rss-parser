@@ -1,4 +1,4 @@
-package pages
+package web
 
 import (
 	"database/sql"
@@ -6,12 +6,15 @@ import (
 	"net/http"
 
 	"github.com/Chepheus/go-rss-parser/web-server/storage/repository"
+	"github.com/Chepheus/go-rss-parser/web-server/web/controllers"
+	"github.com/Chepheus/go-rss-parser/web-server/web/services"
 )
 
 func StartWebServer(port string, db *sql.DB) {
+	htmlRenderer := services.NewHTMLRenderer("./web/templates/")
 	postRepository := repository.NewPostRepository(db)
-	rootController := NewRootController(postRepository)
-	viewPostController := NewViewPostController(postRepository)
+	rootController := controllers.NewRootController(htmlRenderer, postRepository)
+	viewPostController := controllers.NewViewPostController(htmlRenderer, postRepository)
 
 	mux := http.NewServeMux()
 

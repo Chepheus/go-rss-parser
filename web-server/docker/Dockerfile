@@ -17,6 +17,7 @@ WORKDIR /app
 
 COPY --from=builder /app/web-server .
 COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/web/templates ./web/templates
 
 EXPOSE 8080
 

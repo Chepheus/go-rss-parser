@@ -1,4 +1,4 @@
-package pages
+package controllers
 
 import (
 	"fmt"
@@ -7,9 +7,12 @@ import (
 	"strconv"
 
 	"github.com/Chepheus/go-rss-parser/web-server/storage/repository"
+	"github.com/Chepheus/go-rss-parser/web-server/vo"
+	"github.com/Chepheus/go-rss-parser/web-server/web/services"
 )
 
 type ViewPostController struct {
+	htmlRenderer   services.HTMLRenderer
 	postRepository *repository.PostRepository
 }
 
@@ -31,11 +34,16 @@ func (c *ViewPostController) GetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	io.WriteString(w, fmt.Sprintf("Post %d with post title: %s!\n", post.Id, post.Title))
+	data := &services.TemplateData{
+		"post": vo.NewPostDetails(post.Id, post.Title, post.MainImage.String, post.Content.String, post.PubDate),
+	}
+
+	c.htmlRenderer.Render(w, "post", data)
 }
 
-func NewViewPostController(postRepository *repository.PostRepository) *ViewPostController {
+func NewViewPostController(htmlRenderer services.HTMLRenderer, postRepository *repository.PostRepository) *ViewPostController {
 	return &ViewPostController{
+		htmlRenderer:   htmlRenderer,
 		postRepository: postRepository,
 	}
 }

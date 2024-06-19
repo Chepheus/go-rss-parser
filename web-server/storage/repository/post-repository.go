@@ -40,7 +40,6 @@ func (r *PostRepository) GetPosts(page, limit int32) ([]Post, error) {
 		if err := rows.Scan(&post.Id, &post.Title, &post.Thumbnail, &post.ShortDescription, &post.PubDate); err != nil {
 			return posts, err
 		}
-		//time.Parse("2006-01-02", dateString)
 		posts = append(posts, post)
 	}
 	if err := rows.Err(); err != nil {
@@ -51,17 +50,17 @@ func (r *PostRepository) GetPosts(page, limit int32) ([]Post, error) {
 }
 
 func (r *PostRepository) GetPost(postId int64) (*Post, error) {
-	var post *Post
+	var post Post
 	err := r.db.QueryRow(
 		"SELECT id, title, main_image, content, pub_date FROM posts WHERE id = $1",
 		postId,
-	).Scan(&post)
+	).Scan(&post.Id, &post.Title, &post.MainImage, &post.Content, &post.PubDate)
 
 	if err != nil {
-		return nil, fmt.Errorf("post number %d is't exists", postId)
+		return nil, err
 	}
 
-	return post, nil
+	return &post, nil
 }
 
 func NewPostRepository(db *sql.DB) *PostRepository {
