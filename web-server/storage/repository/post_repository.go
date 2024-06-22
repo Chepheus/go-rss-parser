@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
 )
 
 type Post struct {
@@ -25,13 +24,13 @@ func (r *PostRepository) GetPosts(page, limit int32) ([]Post, error) {
 		limit,
 		(page-1)*limit,
 	)
+	if err != nil {
+		return nil, err
+	}
+
 	defer func() {
 		_ = rows.Close()
 	}()
-
-	if err != nil {
-		return nil, fmt.Errorf("page %d is't exists", page)
-	}
 
 	var posts []Post
 

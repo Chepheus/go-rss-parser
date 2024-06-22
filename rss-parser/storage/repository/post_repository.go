@@ -19,7 +19,7 @@ func (r *PostRepository) IsExist(externalPostLink string) (bool, error) {
 	).Scan(&isExist)
 
 	if err != nil {
-		return false, errors.New("post with link was not saved: " + externalPostLink)
+		return false, err
 	}
 
 	return isExist, nil

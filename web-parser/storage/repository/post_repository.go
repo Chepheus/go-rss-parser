@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"errors"
 
 	"github.com/Chepheus/go-rss-parser/web-parser/dto"
 )
@@ -20,7 +19,7 @@ func (r PostRepository) Update(post dto.WebPost) error {
 	)
 
 	if err != nil {
-		return errors.New("post with link was not updated: " + post.ExternalPostLink)
+		return err
 	}
 
 	return nil
